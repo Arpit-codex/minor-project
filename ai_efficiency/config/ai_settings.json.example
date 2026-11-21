@@ -1,0 +1,6 @@
+{
+  "provider": "freellmapi",
+  "api_key": "YOUR_FREELLMAPI_KEY_HERE",
+  "model_name": "gemini-3.1-flash-lite",
+  "base_url": "http://localhost:3001/v1"
+}

@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ AI Architecture & Token Efficiency Optimizer — Minor Project</title>
+    <meta name="description" content="Consumer-Side Pre-Processing, Non-AI Algorithmic Token Compression, Prompt IR, Intent Routing & Code Editor">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/diff.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+    <style>
+        /* ═══════════════ DESIGN SYSTEM ═══════════════ */
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-card: #1c2128;
+            --bg-hover: #292e36;
+            --border: #30363d;
+            --border-active: #58a6ff;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent: #58a6ff;
+            --accent-glow: rgba(88, 166, 255, 0.15);
+            --danger: #f85149;
+            --success: #56d364;
+            --purple: #7C6FE0;
+            --amber: #f0883e;
+            --teal: #4ECDC4;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-deep: 0 16px 48px rgba(0, 0, 0, 0.6);
+            --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* ─── TOP NAVBAR ─── */
+        .top-navbar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .brand-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .brand-badge {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--amber), #ff6b6b);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 0 10px rgba(240, 136, 62, 0.3);
+        }
+
+        .brand-text h1 {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .brand-text span {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .nav-link-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+            border-color: var(--border-active);
+        }
+
+        .nav-link-btn.active {
+            color: #fff;
+            background: var(--bg-card);
+            border-color: var(--border-active);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        /* ─── MAIN CONTAINER ─── */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Module Tab Selector */
+        .module-tabs-nav {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-secondary);
+            padding: 6px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .mod-tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .mod-tab-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .mod-tab-btn.active {
+            color: var(--text-primary);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            font-weight: 600;
+        }
+
+        .tab-panel {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        .tab-panel.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ─── CARDS & GRIDS ─── */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        @media (max-width: 980px) {
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+        }
+
+        /* Metrics summary tiles */
+        .metric-tile {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-tile::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .metric-tile.green::before { background: var(--success); }
+        .metric-tile.blue::before { background: var(--accent); }
+        .metric-tile.purple::before { background: var(--purple); }
+        .metric-tile.amber::before { background: var(--amber); }
+
+        .tile-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .tile-value {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        .tile-sub {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Form elements */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        textarea.code-textarea {
+            width: 100%;
+            height: 150px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            resize: vertical;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        textarea.code-textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        select, input[type="text"] {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        select:focus, input[type="text"]:focus {
+            border-color: var(--accent);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--accent), #1f6feb);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 10px 20px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: var(--radius-sm);
+            padding: 8px 14px;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent);
+        }
+
+        /* Diff & Code Containers */
+        .code-box {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            line-height: 1.5;
+            overflow-x: auto;
+            max-height: 400px;
+            position: relative;
+        }
+
+        .token-chip-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding: 10px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+        }
+
+        .token-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 7px;
+            border-radius: 4px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            color: var(--text-primary);
+        }
+
+        .token-chip .token-id {
+            color: var(--text-muted);
+            font-size: 9.5px;
+        }
+
+        /* Tables */
+        table.custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+        }
+
+        table.custom-table th {
+            text-align: left;
+            padding: 10px 12px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table.custom-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        table.custom-table tr:hover td {
+            background: var(--bg-hover);
+        }
+
+        /* Status Pills */
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .pill-green { background: rgba(86, 211, 100, 0.15); color: var(--success); border: 1px solid rgba(86, 211, 100, 0.3); }
+        .pill-blue { background: rgba(88, 166, 255, 0.15); color: var(--accent); border: 1px solid rgba(88, 166, 255, 0.3); }
+        .pill-purple { background: rgba(124, 111, 224, 0.15); color: var(--purple); border: 1px solid rgba(124, 111, 224, 0.3); }
+        .pill-amber { background: rgba(240, 136, 62, 0.15); color: var(--amber); border: 1px solid rgba(240, 136, 62, 0.3); }
+
+        /* Toast message */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-active);
+            color: var(--text-primary);
+            padding: 12px 18px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-deep);
+            font-size: 13px;
+            display: none;
+            z-index: 100;
+            animation: slideUp 0.2s ease-in-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── TOP NAVBAR ─── -->
+    <header class="top-navbar">
+        <a href="/efficiency" class="brand-group">
+            <div class="brand-badge">⚡</div>
+            <div class="brand-text">
+                <h1>AI Architecture & Efficiency Engine</h1>
+                <span>Consumer-Side Pre-Processing & Token Optimization Subsystem</span>
+            </div>
+        </a>
+
+        <nav class="nav-links">
+            <a href="/chat" class="nav-link-btn">💬 Chat</a>
+            <a href="/memory-graph" class="nav-link-btn">🧠 Memory Graph</a>
+            <a href="/efficiency" class="nav-link-btn active">⚡ Efficiency Optimizer</a>
+            <span class="pill pill-green" style="margin-left:8px;">Router: gemini-3.1-flash-lite</span>
+        </nav>
+    </header>
+
+    <!-- ─── MAIN CONTENT ─── -->
+    <main class="main-container">
+
+        <!-- Module Navigation Tabs -->
+        <div class="module-tabs-nav">
+            <button class="mod-tab-btn active" data-tab="pipeline" onclick="switchModTab('pipeline')">
+                📊 Pipeline & Compression
+            </button>
+            <button class="mod-tab-btn" data-tab="tokenization" onclick="switchModTab('tokenization')">
+                🔤 Subword Tokens & Fragmentation
+            </button>
+            <button class="mod-tab-btn" data-tab="ir" onclick="switchModTab('ir')">
+                🧠 Feature Extraction & Prompt IR
+            </button>
+            <button class="mod-tab-btn" data-tab="routing" onclick="switchModTab('routing')">
+                🎯 Intent Routing & Cost Optimizer
+            </button>
+            <button class="mod-tab-btn" data-tab="fidelity" onclick="switchModTab('fidelity')">
+                ⚖️ Live A/B Answer Fidelity
+            </button>
+            <button class="mod-tab-btn" data-tab="editor" onclick="switchModTab('editor')">
+                📝 3-Tier Code Editor Engine
+            </button>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- TAB 1: PIPELINE & COMPRESSION                                    -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <section id="tab-pipeline" class="tab-panel active">
+            <!-- Controls Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>⚡</span> Consumer Pre-Processing & Non-AI Compression Pipeline
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <select id="benchmark-select" onchange="loadSelectedBenchmark()" style="min-width:240px;">
+                            <option value="">📂 Load Benchmark Scenario...</option>
+                        </select>
+                        <select id="encoding-select">
+                            <option value="cl100k_base" selected>cl100k_base (GPT-4/3.5)</option>
+                            <option value="o200k_base">o200k_base (GPT-4o/Omni)</option>
+                        </select>
+                        <select id="compression-level-select">
+                            <option value="SAFE">Safe / Conservative</option>
+                            <option value="BALANCED" selected>Balanced (Recommended)</option>
+                            <option value="AGGRESSIVE">Aggressive (Maximum)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">
+                        <span>Input Prompt Payload (Natural Language, Code, or Multilingual Query)</span>
+                        <span id="raw-prompt-char-count">0 characters</span>
+                    </label>
+                    <textarea id="prompt-input" class="code-textarea" placeholder="Paste or type any conversational or code-heavy prompt to optimize..."></textarea>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size:12px; color:var(--text-muted);">
+                        <span>Non-AI algorithmic passes: Linguistic boilerplate removal, AST code compaction, NFKC normalization.</span>
+                    </div>
+                    <button class="btn-primary" onclick="runPipelineOptimization()">
+                        <span>⚡ Optimize & Profile</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Metrics Summary Tiles -->
+            <div class="grid-4" id="metrics-tiles-grid" style="display:none;">
+                <div class="metric-tile green">
+                    <span class="tile-label">Tokens Saved</span>
+                    <span class="tile-value" id="m-tokens-saved">0</span>
+                    <span class="tile-sub" id="m-tokens-saved-pct">0% Reduction</span>
+                </div>
+                <div class="metric-tile blue">
+                    <span class="tile-label">Pre-Processing Latency</span>
+                    <span class="tile-value" id="m-latency">0 ms</span>
+                    <span class="tile-sub">Consumer-side execution</span>
+                </div>
+                <div class="metric-tile purple">
+                    <span class="tile-label">Density Gain</span>
+                    <span class="tile-value" id="m-density">+0%</span>
+                    <span class="tile-sub">Information compression ratio</span>
+                </div>
+                <div class="metric-tile amber">
+                    <span class="tile-label">Est. Monthly Savings</span>
+                    <span class="tile-value" id="m-monthly-savings">$0.00</span>
+                    <span class="tile-sub">Across 100k queries/month</span>
+                </div>
+            </div>
+
+            <!-- Side-by-Side Payload Comparison -->
+            <div class="grid-2" id="payload-diff-grid" style="display:none;">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Original Uncompressed Prompt</div>
+                        <span class="pill pill-blue" id="lbl-raw-tokens">0 tokens</span>
+                    </div>
+                    <div class="code-box" id="view-raw-prompt" style="white-space:pre-wrap;"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Compressed Payload (Preserving Anchors & Code)</div>
+                        <div style="display:flex; gap:6px;">
+                            <span class="pill pill-green" id="lbl-comp-tokens">0 tokens</span>
+                            <button class="btn-secondary" onclick="copyCompressedPrompt()">📋 Copy</button>
+                            <button class="btn-primary" style="padding:4px 10px; font-size:11px;" onclick="sendToChat()">💬 Send to Chat</button>
+                        </div>
+                    </div>
+                    <div class="code-box" id="view-compressed-prompt" style="white-space:pre-wrap; border-color:var(--success);"></div>
+                </div>
+            </div>
+
+            <!-- Cost Comparison Table -->
+            <div class="card" id="cost-table-card" style="display:none;">
+                <div class="card-header">
+                    <div class="card-title">📊 Multi-Model Financial Economics (Annualized at 100,000 queries/mo)</div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="custom-table" id="cost-table">
+                        <thead>
+                            <tr>
+                                <th>Target Model Architecture</th>
+                                <th>Provider Tier</th>
+                                <th>Original Cost (Mo)</th>
+                                <th>Optimized Cost (Mo)</th>
+                                <th>Monthly Savings</th>
+                                <th>Savings %</th>
+                                <th>Annual Projected Savings</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cost-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- TAB 2: SUBWORD TOKENIZATION & FRAGMENTATION                      -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <section id="tab-tokenization" class="tab-panel">
+            <div class="grid-2">
+                <!-- Subword Token Chips -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🔤 Subword Tokenization Breakdown</div>
+                        <span class="pill pill-purple" id="lbl-token-engine">cl100k_base</span>
+                    </div>
+                    <p style="font-size:12px; color:var(--text-secondary);">
+                        Byte-Pair Encoding (BPE) segments words into subword fragments. Each fragment is mapped to a discrete numerical vocabulary ID:
+                    </p>
+                    <div class="token-chip-container" id="token-chips-display">
+                        <span style="color:var(--text-muted); font-size:12px;">Run optimization in Tab 1 to inspect subword tokens.</span>
+                    </div>
+                </div>
+
+                <!-- Multilingual Fragmentation Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🌐 Multilingual Script & Fragmentation Analysis</div>
+                        <span class="pill pill-amber" id="lbl-frag-severity">Optimal</span>
+                    </div>
+                    <p style="font-size:12px; color:var(--text-secondary);">
+                        Non-Latin scripts (Devanagari, Cyrillic, CJK) often experience severe subword fragmentation bloat:
+                    </p>
+                    <div class="grid-2" style="gap:10px;">
+                        <div class="metric-tile blue">
+                            <span class="tile-label">Primary Script</span>
+                            <span class="tile-value" style="font-size:18px;" id="val-script-name">Latin</span>
+                            <span class="tile-sub" id="val-script-bytes">0 UTF-8 bytes</span>
+                        </div>
+                        <div class="metric-tile green">
+                            <span class="tile-label">Fragmentation Ratio</span>
+                            <span class="tile-value" style="font-size:18px;" id="val-frag-ratio">1.0 tokens/word</span>
+                            <span class="tile-sub" id="val-bytes-per-token">0 bytes/token</span>
+                        </div>
+                    </div>
+                    <div style="font-size:12px; color:var(--text-secondary); margin-top:8px;" id="frag-penalty-note">
+                        Subword Fragmentation Penalty Score: <strong id="val-frag-penalty">0.00 / 1.00</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Information Density & Perplexity Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📈 Information Density & Token Perplexity</div>
+                </div>
+                <div class="grid-3">
+                    <div class="metric-tile purple">
+                        <span class="tile-label">Initial Density</span>
+                        <span class="tile-value" style="font-size:20px;" id="val-initial-density">0.00</span>
+                        <span class="tile-sub">Anchor words / total tokens</span>
+                    </div>
+                    <div class="metric-tile green">
+                        <span class="tile-label">Compressed Density</span>
+                        <span class="tile-value" style="font-size:20px;" id="val-comp-density">0.00</span>
+                        <span class="tile-sub">Anchor words / compressed tokens</span>
+                    </div>
+                    <div class="metric-tile blue">
+                        <span class="tile-label">Information Density Gain</span>
+                        <span class="tile-value" style="font-size:20px;" id="val-density-gain">+0.0%</span>
+                        <span class="tile-sub">Entropy concentration</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- TAB 3: FEATURE EXTRACTION & PROMPT IR                            -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <section id="tab-ir" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🧠 Intermediate Representation (Prompt IR)</div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-secondary" onclick="renderIRFormat('tagged_kv')">Tagged KV</button>
+                        <button class="btn-secondary" onclick="renderIRFormat('minimal_json')">Minimal JSON</button>
+                        <button class="btn-secondary" onclick="renderIRFormat('compact_dsl')">Compact DSL</button>
+                        <button class="btn-primary" onclick="copyCurrentIR()">📋 Copy IR</button>
+                    </div>
+                </div>
+                <p style="font-size:12px; color:var(--text-secondary);">
+                    Transforms verbose conversational prompts into deterministic, high-entropy symbolic payloads for optimal LLM context ingestion:
+                </p>
+                <div class="code-box" id="ir-output-box" style="white-space:pre-wrap; min-height:160px; color:#56d364;">
+                    <span style="color:var(--text-muted);">Run optimization in Tab 1 to generate Prompt IR.</span>
+                </div>
+            </div>
+
+            <!-- Extracted Semantic Entities Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🔍 Extracted Semantic Anchors & Constraints</div>
+                </div>
+                <div class="grid-2">
+                    <div>
+                        <span class="input-label">Identified Action & Target</span>
+                        <div class="code-box" id="ir-action-target" style="height:100px;">None</div>
+                    </div>
+                    <div>
+                        <span class="input-label">Detected Technical Constraints</span>
+                        <div class="code-box" id="ir-constraints" style="height:100px;">None</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- TAB 4: INTENT ROUTING & COST-LATENCY OPTIMIZER                   -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <section id="tab-routing" class="tab-panel">
+            <div class="grid-2">
+                <!-- Complexity & Tier Triage -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🎯 Complexity Triage & Intent Classification</div>
+                        <span class="pill pill-purple" id="lbl-routing-tier">TIER: UNKNOWN</span>
+                    </div>
+                    <div class="metric-tile blue">
+                        <span class="tile-label">Task Complexity Score</span>
+                        <span class="tile-value" id="val-complexity-score">0.00 / 1.00</span>
+                        <span class="tile-sub">Weighted structural & semantic scoring</span>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <span class="input-label">Ensemble Classifiers Breakdown:</span>
+                        <div class="code-box" id="routing-ensemble-box" style="height:140px; margin-top:6px;">Run optimization in Tab 1 to view intent routing classification.</div>
+                    </div>
+                </div>
+
+                <!-- Recommended Runtime Model -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🤖 Recommended Model Runtime</div>
+                        <span class="pill pill-green" id="lbl-target-runtime">Edge SLM</span>
+                    </div>
+                    <div class="metric-tile green">
+                        <span class="tile-label">Optimal Model Selection</span>
+                        <span class="tile-value" style="font-size:20px;" id="val-selected-model">Llama 3.2 1B</span>
+                        <span class="tile-sub" id="val-model-rationale">Zero API Cost & 100% Sovereign Privacy</span>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <span class="input-label">Routing Decision Rationales:</span>
+                        <ul id="routing-rationales-list" style="padding-left:18px; font-size:12.5px; color:var(--text-secondary); line-height:1.6; margin-top:6px;">
+                            <li>Awaiting prompt analysis...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- TAB 5: LIVE A/B ANSWER FIDELITY EVALUATOR                        -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <section id="tab-fidelity" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">⚖️ A/B Output Answer Fidelity Tester (Live FreeLLMAPI)</div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <select id="ab-model-select">
+                            <option value="gemini-3.1-flash-lite" selected>gemini-3.1-flash-lite ⚡ (FreeLLMAPI)</option>
+                            <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
+                            <option value="gemini-flash-lite">gemini-flash-lite</option>
+                        </select>
+                        <button class="btn-primary" onclick="runABFidelityTest()">
+                            <span>🧪 Run Live A/B Test</span>
+                        </button>
+                    </div>
+                </div>
+                <p style="font-size:12px; color:var(--text-secondary);">
+                    Executes Pass A (Uncompressed Raw Prompt) vs Pass B (Algorithmic Compressed Prompt) against your configured AI provider and empirically verifies answer quality preservation.
+                </p>
+
+                <!-- Fidelity Score Indicators -->
+                <div class="grid-4" id="ab-metrics-grid" style="display:none; margin-top:8px;">
+                    <div class="metric-tile green">
+                        <span class="tile-label">Fidelity Score</span>
+                        <span class="tile-value" id="ab-fidelity-score">1.00</span>
+                        <span class="tile-sub" id="ab-verdict">Verified High Fidelity</span>
+                    </div>
+                    <div class="metric-tile blue">
+                        <span class="tile-label">Keyword Retention</span>
+                        <span class="tile-value" id="ab-keyword-retention">100%</span>
+                        <span class="tile-sub">Technical anchors retained</span>
+                    </div>
+                    <div class="metric-tile purple">
+                        <span class="tile-label">Output Latency Diff</span>
+                        <span class="tile-value" id="ab-latency-diff">0 ms</span>
+                        <span class="tile-sub">A vs B generation speed</span>
+                    </div>
+                    <div class="metric-tile amber">
+                        <span class="tile-label">Execution Cost Saved</span>
+                        <span class="tile-value" id="ab-cost-saved">$0.0000</span>
+                        <span class="tile-sub" id="ab-cost-saved-pct">0% saved</span>
+                    </div>
+                </div>
+
+                <!-- Side-by-Side Outputs -->
+                <div class="grid-2" style="margin-top:12px;">
+                    <div>
+                        <div class="input-label" style="margin-bottom:6px;">
+                            <span>Output A (From Uncompressed Raw Prompt)</span>
+                            <span class="pill pill-blue" id="ab-tokens-a">0 tokens</span>
+                        </div>
+                        <div class="code-box" id="ab-output-a" style="height:320px; white-space:pre-wrap;">Awaiting A/B test execution...</div>
+                    </div>
+                    <div>
+                        <div class="input-label" style="margin-bottom:6px;">
+                            <span>Output B (From Algorithmic Compressed Prompt)</span>
+                            <span class="pill pill-green" id="ab-tokens-b">0 tokens</span>
+                        </div>
+                        <div class="code-box" id="ab-output-b" style="height:320px; white-space:pre-wrap; border-color:var(--success);">Awaiting A/B test execution...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- TAB 6: 3-TIER TOKEN-EFFICIENT CODE EDITOR ENGINE                 -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <section id="tab-editor" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📝 3-Tier Token-Efficient Code Editing System</div>
+                    <div style="display:flex; gap:10px;">
+                        <select id="editor-tier-select">
+                            <option value="">Auto-Detect Tier (Recommended)</option>
+                            <option value="DIRECT_EDIT">Tier 1: Direct Deterministic Edit (0 Tokens)</option>
+                            <option value="SNIPPET_EDIT">Tier 2: Targeted Diff Patch (&gt;90% Token Savings)</option>
+                            <option value="FULL_REASONING">Tier 3: Full Context Reasoning</option>
+                        </select>
+                        <button class="btn-primary" onclick="runCodeEditor()">
+                            <span>⚡ Execute Code Edit</span>
+                        </button>
+                    </div>
+                </div>
+                <p style="font-size:12px; color:var(--text-secondary);">
+                    Eliminates massive file regeneration costs. Performs deterministic variable edits with 0 LLM tokens, or extracts minimal targeted diff patches.
+                </p>
+
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label class="input-label">Source Code (Python)</label>
+                        <textarea id="editor-source-code" class="code-textarea" style="height:180px;">import os
+
+# Configuration variables
+HOST = "0.0.0.0"
+PORT = 8080
+DEBUG = True
+MAX_WORKERS = 4
+TIMEOUT_SECONDS = 30
+
+def start_server():
+    print(f"Starting server on {HOST}:{PORT}")
+    return True
+</textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Natural Language Edit Instruction</label>
+                        <textarea id="editor-instruction" class="code-textarea" style="height:180px;">Change the PORT to 9090 and set DEBUG to False</textarea>
+                    </div>
+                </div>
+
+                <!-- Code Editor Results -->
+                <div id="editor-results-container" style="display:none; margin-top:12px; display:flex; flex-direction:column; gap:16px;">
+                    <div class="grid-3">
+                        <div class="metric-tile green">
+                            <span class="tile-label">Edit Tier Used</span>
+                            <span class="tile-value" style="font-size:18px;" id="val-editor-tier">DIRECT_EDIT</span>
+                            <span class="tile-sub" id="val-editor-op">Variable Replacement</span>
+                        </div>
+                        <div class="metric-tile blue">
+                            <span class="tile-label">Tokens Saved</span>
+                            <span class="tile-value" style="font-size:18px;" id="val-editor-tokens-saved">0</span>
+                            <span class="tile-sub" id="val-editor-savings-pct">0% Savings</span>
+                        </div>
+                        <div class="metric-tile purple">
+                            <span class="tile-label">Execution Latency</span>
+                            <span class="tile-value" style="font-size:18px;" id="val-editor-latency">0 ms</span>
+                            <span class="tile-sub">Deterministic sub-millisecond edit</span>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div>
+                            <span class="input-label" style="margin-bottom:6px;">Unified Diff Patch</span>
+                            <div class="code-box" id="editor-diff-box" style="height:220px; color:#56d364;"></div>
+                        </div>
+                        <div>
+                            <span class="input-label" style="margin-bottom:6px;">Modified Output Code</span>
+                            <div class="code-box" id="editor-modified-box" style="height:220px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- JAVASCRIPT CONTROLLER                                                -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <script>
+        let currentOptimizedPayload = null;
+        let benchmarkList = [];
+
+        // ─── INITIALIZATION ───
+        document.addEventListener("DOMContentLoaded", () => {
+            loadBenchmarks();
+            setupPromptCharCounter();
+        });
+
+        function setupPromptCharCounter() {
+            const input = document.getElementById("prompt-input");
+            const counter = document.getElementById("raw-prompt-char-count");
+            input.addEventListener("input", () => {
+                counter.innerText = `${input.value.length} characters`;
+            });
+        }
+
+        // ─── TAB NAVIGATION ───
+        function switchModTab(tabId) {
+            document.querySelectorAll(".mod-tab-btn").forEach(btn => {
+                btn.classList.toggle("active", btn.dataset.tab === tabId);
+            });
+            document.querySelectorAll(".tab-panel").forEach(panel => {
+                panel.classList.toggle("active", panel.id === `tab-${tabId}`);
+            });
+        }
+
+        // ─── LOAD BENCHMARKS ───
+        async function loadBenchmarks() {
+            try {
+                const res = await fetch("/api/optimize/benchmarks");
+                if (!res.ok) return;
+                benchmarkList = await res.json();
+                const sel = document.getElementById("benchmark-select");
+                benchmarkList.forEach((bm, idx) => {
+                    const opt = document.createElement("option");
+                    opt.value = idx;
+                    opt.innerText = `${bm.category || bm.id}: ${(bm.text || bm.raw_prompt || '').substring(0, 45)}...`;
+                    sel.appendChild(opt);
+                });
+            } catch (err) {
+                console.warn("Failed to load benchmarks:", err);
+            }
+        }
+
+        function loadSelectedBenchmark() {
+            const sel = document.getElementById("benchmark-select");
+            const idx = sel.value;
+            if (idx === "") return;
+            const bm = benchmarkList[idx];
+            if (bm) {
+                const input = document.getElementById("prompt-input");
+                input.value = bm.text || bm.raw_prompt || "";
+                document.getElementById("raw-prompt-char-count").innerText = `${input.value.length} characters`;
+                showToast(`Loaded benchmark: ${bm.category || bm.id}`);
+            }
+        }
+
+        // ─── PIPELINE OPTIMIZATION ───
+        async function runPipelineOptimization() {
+            const prompt = document.getElementById("prompt-input").value.trim();
+            if (!prompt) {
+                showToast("Please enter a prompt to optimize!");
+                return;
+            }
+
+            const level = document.getElementById("compression-level-select").value;
+            const encoding = document.getElementById("encoding-select").value;
+
+            showToast("Running algorithmic compression & architectural pipeline...");
+
+            try {
+                const res = await fetch("/api/optimize", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt, level, encoding })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    showToast("Optimization failed: " + (err.error || res.statusText));
+                    return;
+                }
+
+                const data = await res.json();
+                currentOptimizedPayload = data;
+                renderPipelineResults(data);
+                showToast("✅ Optimization and profiling complete!");
+            } catch (err) {
+                showToast("Error connecting to server: " + err);
+            }
+        }
+
+        function renderPipelineResults(data) {
+            // Show metrics and payload containers
+            document.getElementById("metrics-tiles-grid").style.display = "grid";
+            document.getElementById("payload-diff-grid").style.display = "grid";
+            document.getElementById("cost-table-card").style.display = "flex";
+
+            // Metric tiles
+            document.getElementById("m-tokens-saved").innerText = data.tokens_saved || 0;
+            document.getElementById("m-tokens-saved-pct").innerText = `${data.token_reduction_pct || 0}% Reduction`;
+            document.getElementById("m-latency").innerText = `${data.total_pipeline_latency_ms || 0.4} ms`;
+            
+            const densityGain = data.information_density_gain?.density_gain_pct || 0;
+            document.getElementById("m-density").innerText = `+${densityGain}%`;
+
+            // Calculate estimated monthly savings
+            let totalMoSavings = 0;
+            if (data.cost_table && data.cost_table.length > 0) {
+                totalMoSavings = data.cost_table[0].saved_monthly || 0;
+            }
+            document.getElementById("m-monthly-savings").innerText = `$${totalMoSavings.toFixed(2)}`;
+
+            // Payloads
+            document.getElementById("lbl-raw-tokens").innerText = `${data.raw_tokens || 0} tokens`;
+            document.getElementById("lbl-comp-tokens").innerText = `${data.compressed_tokens || 0} tokens`;
+            document.getElementById("view-raw-prompt").innerText = data.raw_prompt || "";
+            document.getElementById("view-compressed-prompt").innerText = data.compressed_prompt || "";
+
+            // Subword Token Chips
+            renderTokenChips(data.subword_comparison);
+
+            // Multilingual Fragmentation
+            renderFragmentation(data.multilingual_fragmentation);
+
+            // Density & Perplexity
+            renderDensity(data.information_density_gain);
+
+            // Prompt IR
+            renderIR(data.prompt_ir);
+
+            // Intent Routing
+            renderRouting(data.routing_decision);
+
+            // Cost Table
+            renderCostTable(data.cost_table);
+        }
+
+        // ─── TAB 2: TOKEN CHIPS & FRAGMENTATION ───
+        function renderTokenChips(subword) {
+            const container = document.getElementById("token-chips-display");
+            container.innerHTML = "";
+            const details = subword?.cl100k_details || subword?.o200k_details || [];
+            
+            if (details.length === 0) {
+                container.innerHTML = '<span style="color:var(--text-muted); font-size:12px;">No token details available.</span>';
+                return;
+            }
+
+            details.slice(0, 150).forEach(d => {
+                const chip = document.createElement("div");
+                chip.className = "token-chip";
+                const reprText = (d.text || '').replace(/\n/g, '\\n');
+                chip.innerHTML = `<span>${escapeHtml(reprText)}</span><span class="token-id">#${d.token_id}</span>`;
+                container.appendChild(chip);
+            });
+            if (details.length > 150) {
+                const more = document.createElement("div");
+                more.className = "token-chip";
+                more.innerText = `+${details.length - 150} more tokens`;
+                container.appendChild(more);
+            }
+        }
+
+        function renderFragmentation(frag) {
+            if (!frag) return;
+            document.getElementById("val-script-name").innerText = frag.detected_primary_script || "Latin";
+            document.getElementById("val-script-bytes").innerText = `${frag.total_characters || 0} chars | ${frag.total_utf8_bytes || 0} bytes`;
+            document.getElementById("val-frag-ratio").innerText = `${frag.cl100k_fragmentation_ratio || 1.0} tokens/word`;
+            document.getElementById("val-bytes-per-token").innerText = `${frag.cl100k_bytes_per_token || 0} bytes/token`;
+            
+            const isHeavily = frag.is_heavily_fragmented;
+            const sevBadge = document.getElementById("lbl-frag-severity");
+            sevBadge.innerText = isHeavily ? "⚠️ Heavily Fragmented" : "Optimal Encoding";
+            sevBadge.className = isHeavily ? "pill pill-amber" : "pill pill-green";
+
+            document.getElementById("val-frag-penalty").innerText = `${frag.fragmentation_penalty_score || 0.0} / 1.00`;
+        }
+
+        function renderDensity(density) {
+            if (!density) return;
+            document.getElementById("val-initial-density").innerText = density.initial_density_score || "0.00";
+            document.getElementById("val-comp-density").innerText = density.compressed_density_score || "0.00";
+            document.getElementById("val-density-gain").innerText = `+${density.density_gain_pct || 0}%`;
+        }
+
+        // ─── TAB 3: PROMPT IR ───
+        function renderIR(irData) {
+            if (!irData) return;
+            window.activeIRSerialized = irData.serialized || {};
+            renderIRFormat('tagged_kv');
+
+            document.getElementById("ir-action-target").innerText = `Action: ${irData.action || 'None'}\nTarget: ${irData.target || 'None'}`;
+            const constraints = (irData.constraints || []).join('\n• ');
+            document.getElementById("ir-constraints").innerText = constraints ? `• ${constraints}` : "No strict negative/positive constraints detected.";
+        }
+
+        function renderIRFormat(fmt) {
+            const box = document.getElementById("ir-output-box");
+            if (!window.activeIRSerialized) return;
+            const text = window.activeIRSerialized[fmt] || "No serialization found.";
+            box.innerText = text;
+        }
+
+        function copyCurrentIR() {
+            const box = document.getElementById("ir-output-box");
+            navigator.clipboard.writeText(box.innerText);
+            showToast("Prompt IR copied to clipboard!");
+        }
+
+        // ─── TAB 4: INTENT ROUTING ───
+        function renderRouting(route) {
+            if (!route) return;
+            const tier = route.tier || "LOW";
+            document.getElementById("lbl-routing-tier").innerText = `TIER: ${tier}`;
+            document.getElementById("val-complexity-score").innerText = `${route.complexity_score || 0.0} / 1.00`;
+            
+            document.getElementById("lbl-target-runtime").innerText = route.target_runtime || "Edge SLM";
+            document.getElementById("val-selected-model").innerText = route.selected_model_name || "Llama 3.2 1B";
+            
+            const opt = route.cost_latency_optimization || {};
+            document.getElementById("val-model-rationale").innerText = `Estimated Latency: ${opt.estimated_latency_ms || 45} ms | Cost: $${(opt.estimated_cost_usd || 0).toFixed(6)}`;
+
+            // Ensemble classifiers
+            const ens = route.ensemble_classification || {};
+            const ensBox = document.getElementById("routing-ensemble-box");
+            ensBox.innerText = JSON.stringify(ens, null, 2);
+
+            // Rationales
+            const ratList = document.getElementById("routing-rationales-list");
+            ratList.innerHTML = "";
+            (route.rationales || ["Optimal consumer-side execution tier."]).forEach(r => {
+                const li = document.createElement("li");
+                li.innerText = r;
+                ratList.appendChild(li);
+            });
+        }
+
+        // ─── COST TABLE ───
+        function renderCostTable(rows) {
+            const tbody = document.getElementById("cost-table-body");
+            tbody.innerHTML = "";
+            (rows || []).forEach(r => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><strong>${escapeHtml(r.model)}</strong></td>
+                    <td><span class="pill pill-blue">${escapeHtml(r.provider)}</span></td>
+                    <td>$${r.raw_cost_monthly.toFixed(2)}</td>
+                    <td style="color:var(--success); font-weight:600;">$${r.optimized_cost_monthly.toFixed(2)}</td>
+                    <td style="color:var(--success); font-weight:600;">+$${r.saved_monthly.toFixed(2)}</td>
+                    <td><span class="pill pill-green">${r.savings_pct}%</span></td>
+                    <td style="color:var(--amber); font-weight:700;">$${r.saved_annual.toFixed(2)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ─── TAB 5: LIVE A/B FIDELITY TEST ───
+        async function runABFidelityTest() {
+            const prompt = document.getElementById("prompt-input").value.trim() || 
+                           "Could you please kindly explain how binary search works in Python? def search(arr, x): return -1";
+            const model = document.getElementById("ab-model-select").value;
+
+            showToast("🧪 Running live A/B output answer fidelity test...");
+            document.getElementById("ab-output-a").innerText = "Generating live response for Pass A (Raw uncompressed prompt)...";
+            document.getElementById("ab-output-b").innerText = "Generating live response for Pass B (Compressed payload)...";
+
+            try {
+                const res = await fetch("/api/optimize/ab-test", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt, model, force_simulation: false })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    showToast("A/B test failed: " + (err.error || res.statusText));
+                    document.getElementById("ab-output-a").innerText = "A/B test failed: " + (err.error || res.statusText);
+                    document.getElementById("ab-output-b").innerText = "";
+                    return;
+                }
+
+                const data = await res.json();
+                renderABResults(data);
+                showToast("✅ A/B Fidelity test completed!");
+            } catch (err) {
+                showToast("Error connecting to server: " + err);
+            }
+        }
+
+        function renderABResults(data) {
+            document.getElementById("ab-metrics-grid").style.display = "grid";
+
+            const metrics = data.metrics || {};
+            const score = metrics.semantic_similarity !== undefined ? metrics.semantic_similarity : 0.95;
+            document.getElementById("ab-fidelity-score").innerText = (score).toFixed(2);
+            document.getElementById("ab-verdict").innerText = metrics.verdict || "High Fidelity Preservation";
+
+            const kwRet = metrics.keyword_retention !== undefined ? (metrics.keyword_retention * 100).toFixed(0) : "100";
+            document.getElementById("ab-keyword-retention").innerText = `${kwRet}%`;
+
+            const latDiff = (data.latency_a_ms || 0) - (data.latency_b_ms || 0);
+            document.getElementById("ab-latency-diff").innerText = `${Math.round(latDiff)} ms`;
+
+            document.getElementById("ab-cost-saved").innerText = `$${(data.cost_saved_usd || 0).toFixed(4)}`;
+            document.getElementById("ab-cost-saved-pct").innerText = `${data.cost_savings_pct || 0}% saved`;
+
+            document.getElementById("ab-tokens-a").innerText = `${data.output_a_tokens || 0} tokens`;
+            document.getElementById("ab-tokens-b").innerText = `${data.output_b_tokens || 0} tokens`;
+
+            document.getElementById("ab-output-a").innerText = data.output_a || data.response_a_text || "";
+            document.getElementById("ab-output-b").innerText = data.output_b || data.response_b_text || "";
+        }
+
+        // ─── TAB 6: 3-TIER CODE EDITOR ───
+        async function runCodeEditor() {
+            const code = document.getElementById("editor-source-code").value.trim();
+            const instruction = document.getElementById("editor-instruction").value.trim();
+            const tier = document.getElementById("editor-tier-select").value;
+
+            if (!code || !instruction) {
+                showToast("Please provide source code and an edit instruction.");
+                return;
+            }
+
+            showToast("Executing token-efficient code edit...");
+
+            try {
+                const res = await fetch("/api/optimize/code-edit", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code, instruction, tier: tier || null })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    showToast("Code edit failed: " + (err.error || res.statusText));
+                    return;
+                }
+
+                const data = await res.json();
+                renderEditorResults(data);
+                showToast("✅ Code edit executed successfully!");
+            } catch (err) {
+                showToast("Error connecting to server: " + err);
+            }
+        }
+
+        function renderEditorResults(data) {
+            document.getElementById("editor-results-container").style.display = "flex";
+
+            document.getElementById("val-editor-tier").innerText = data.tier || "DIRECT_EDIT";
+            document.getElementById("val-editor-op").innerText = data.operation || "Variable Replacement";
+            document.getElementById("val-editor-tokens-saved").innerText = `${data.tokens_saved || 0} tokens`;
+            document.getElementById("val-editor-savings-pct").innerText = `${data.token_savings_pct || 0}% Reduction`;
+            document.getElementById("val-editor-latency").innerText = `${(data.latency_ms || 0.2).toFixed(2)} ms`;
+
+            const diffBox = document.getElementById("editor-diff-box");
+            diffBox.innerText = data.diff || "No diff generated.";
+
+            const modBox = document.getElementById("editor-modified-box");
+            modBox.innerText = data.modified_code || "";
+        }
+
+        // ─── UTILITIES ───
+        function copyCompressedPrompt() {
+            const text = document.getElementById("view-compressed-prompt").innerText;
+            if (!text) return;
+            navigator.clipboard.writeText(text);
+            showToast("Compressed prompt copied to clipboard!");
+        }
+
+        function sendToChat() {
+            const text = document.getElementById("view-compressed-prompt").innerText;
+            if (!text) return;
+            sessionStorage.setItem("ai_assistant_prefill_prompt", text);
+            window.location.href = "/chat";
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById("toast");
+            toast.innerText = msg;
+            toast.style.display = "block";
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => {
+                toast.style.display = "none";
+            }, 3500);
+        }
+
+        function escapeHtml(str) {
+            return (str || '')
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>

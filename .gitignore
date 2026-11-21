@@ -1,0 +1,50 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+*.env
+.venv/
+env/
+venv/
+ENV/
+
+# Database & Private Local Storage
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+data/logs/*
+data/memory_index/*
+!data/logs/.gitkeep
+!data/memory_index/.gitkeep
+
+# Memory files (protect user private notes)
+memory/*/*.md
+memory/*/*.json
+!memory/**/.gitkeep
+
+# Pytest & IDE
+.pytest_cache/
+.coverage
+htmlcov/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ai_efficiency subfolder private data & settings
+ai_efficiency/config/ai_settings.json
+ai_efficiency/config/*.json
+!ai_efficiency/config/*.example
+ai_efficiency/data/
+ai_efficiency/.cache/
+ai_efficiency/.pytest_cache/
+ai_efficiency/venv/
+
+# OS artifacts
+Thumbs.db
+.DS_Store
+*.log

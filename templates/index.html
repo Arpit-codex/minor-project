@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Graph — Obsidian View</title>
+    <meta name="description" content="Interactive force-directed graph visualization of your personal AI memory system">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* ═══════════════ DESIGN SYSTEM ═══════════════ */
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-card: #1c2128;
+            --bg-hover: #292e36;
+            --border: #30363d;
+            --border-active: #58a6ff;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent: #58a6ff;
+            --accent-glow: rgba(88, 166, 255, 0.15);
+            --danger: #f85149;
+            --success: #56d364;
+            --purple: #7C6FE0;
+            --shadow-deep: 0 16px 48px rgba(0, 0, 0, 0.6);
+            --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.4);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ═══════════════ LAYOUT ═══════════════ */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ─── SIDEBAR ─── */
+        .sidebar {
+            width: 300px;
+            min-width: 300px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            transition: var(--transition);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-header h1 {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar-header h1 .logo {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--purple), var(--accent));
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+        }
+
+        .sidebar-header .subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .search-box {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Category Filters */
+        .category-filters {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .cat-pill {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            opacity: 0.5;
+            user-select: none;
+        }
+
+        .cat-pill.active {
+            opacity: 1;
+            border-color: currentColor;
+        }
+
+        .cat-pill:hover {
+            opacity: 0.85;
+            transform: scale(1.05);
+        }
+
+        /* Memory List */
+        .memory-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 12px;
+        }
+
+        .memory-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .memory-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .memory-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .memory-card {
+            padding: 12px 14px;
+            margin-bottom: 4px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: var(--transition);
+        }
+
+        .memory-card:hover {
+            background: var(--bg-hover);
+        }
+
+        .memory-card.selected {
+            background: var(--bg-tertiary);
+            border-left-color: var(--accent);
+        }
+
+        .memory-card .card-category {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+
+        .memory-card .card-title {
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .memory-card .card-preview {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Sidebar Footer / Stats */
+        .sidebar-footer {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-footer .stat {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .btn {
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent);
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .btn-accent:hover {
+            background: #4d94e6;
+        }
+
+        .btn-danger {
+            color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: rgba(248, 81, 73, 0.1);
+            border-color: var(--danger);
+        }
+
+        /* ─── GRAPH AREA ─── */
+        .graph-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #graph-canvas {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+        }
+
+        /* Graph Overlay Controls */
+        .graph-controls {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 5;
+        }
+
+        .graph-controls button {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .graph-controls button:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent);
+        }
+
+        /* Graph Legend */
+        .graph-legend {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            background: rgba(22, 27, 34, 0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 18px;
+            z-index: 5;
+        }
+
+        .graph-legend h3 {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ─── DETAIL PANEL (slide-in) ─── */
+        .detail-panel {
+            position: fixed;
+            top: 0;
+            right: -460px;
+            width: 460px;
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            box-shadow: var(--shadow-deep);
+            z-index: 20;
+            transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-panel.open {
+            right: 0;
+        }
+
+        .detail-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-header h2 {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: none;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .close-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .detail-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .detail-field {
+            margin-bottom: 18px;
+        }
+
+        .detail-field label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+
+        .detail-field .value {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        .detail-field input,
+        .detail-field textarea,
+        .detail-field select {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .detail-field input:focus,
+        .detail-field textarea:focus,
+        .detail-field select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .detail-field textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .detail-actions {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .confidence-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: var(--bg-tertiary);
+            margin-top: 6px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* ─── MODAL (Add Memory) ─── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 30;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-deep);
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        /* ─── SVG Styles ─── */
+        .link {
+            fill: none;
+            stroke-opacity: 0.2;
+            transition: stroke-opacity 0.3s;
+        }
+
+        .link.category { stroke-dasharray: 4 3; }
+        .link.semantic { stroke-dasharray: none; }
+        .link.tag { stroke-dasharray: 2 2; }
+
+        .node-group { cursor: pointer; }
+
+        .node-glow {
+            fill: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .node-group:hover .node-glow {
+            opacity: 0.25;
+        }
+
+        .node-group:hover .node-circle {
+            filter: brightness(1.2);
+        }
+
+        .node-label {
+            fill: var(--text-secondary);
+            font-size: 10px;
+            font-weight: 500;
+            pointer-events: none;
+            text-anchor: middle;
+            paint-order: stroke;
+            stroke: var(--bg-primary);
+            stroke-width: 3px;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .node-label.hub-label {
+            font-size: 11px;
+            font-weight: 700;
+            fill: var(--text-primary);
+            letter-spacing: 0.04em;
+        }
+
+        /* ─── Toast Notifications ─── */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+        }
+
+        .toast {
+            padding: 10px 20px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 13px;
+            box-shadow: var(--shadow-medium);
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- ══════ SIDEBAR ══════ -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h1><span class="logo">◈</span> Memory Graph</h1>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <a href="/chat" style="display:inline-flex; align-items:center; gap:4px; text-decoration:none; padding:4px 8px; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--accent); font-size:12px; font-weight:500; transition:var(--transition);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                            💬 Chat
+                        </a>
+                        <a href="/efficiency" style="display:inline-flex; align-items:center; gap:4px; text-decoration:none; padding:4px 8px; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--accent); font-size:12px; font-weight:500; transition:var(--transition);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                            ⚡ Opt
+                        </a>
+                    </div>
+                </div>
+                <div class="subtitle">Local AI Memory — Obsidian View</div>
+            </div>
+
+            <div class="search-box">
+                <input type="text" class="search-input" id="search-input" placeholder="Search memories..." />
+            </div>
+
+            <div class="category-filters" id="category-filters"></div>
+
+            <div class="memory-list" id="memory-list">
+                <div style="padding:40px 20px; text-align:center; color:var(--text-muted); font-size:13px;">
+                    Loading memories...
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <span class="stat" id="stats-text">— memories</span>
+                <button class="btn btn-accent" onclick="openAddModal()">+ Add Memory</button>
+            </div>
+        </div>
+
+        <!-- ══════ GRAPH ══════ -->
+        <div class="graph-container">
+            <svg id="graph-canvas"></svg>
+
+            <div class="graph-legend" id="graph-legend"></div>
+
+            <div class="graph-controls">
+                <button onclick="zoomIn()" title="Zoom in">+</button>
+                <button onclick="zoomOut()" title="Zoom out">−</button>
+                <button onclick="resetZoom()" title="Reset view">⌂</button>
+                <button onclick="refreshGraph()" title="Refresh">↻</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════ DETAIL PANEL ══════ -->
+    <div class="detail-panel" id="detail-panel">
+        <div class="detail-header">
+            <h2 id="detail-title">Memory Details</h2>
+            <button class="close-btn" onclick="closeDetail()">✕</button>
+        </div>
+        <div class="detail-body" id="detail-body"></div>
+        <div class="detail-actions" id="detail-actions"></div>
+    </div>
+
+    <!-- ══════ ADD MEMORY MODAL ══════ -->
+    <div class="modal-overlay" id="add-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Add New Memory</h2>
+                <button class="close-btn" onclick="closeAddModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-field">
+                    <label>Category</label>
+                    <select id="new-category"></select>
+                </div>
+                <div class="detail-field">
+                    <label>Title</label>
+                    <input type="text" id="new-title" placeholder="Brief title..." />
+                </div>
+                <div class="detail-field">
+                    <label>Content</label>
+                    <textarea id="new-content" placeholder="Memory content..."></textarea>
+                </div>
+                <div class="detail-field">
+                    <label>Tags (comma-separated)</label>
+                    <input type="text" id="new-tags" placeholder="e.g. python, ai, college" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeAddModal()">Cancel</button>
+                <button class="btn btn-accent" onclick="submitNewMemory()">Save Memory</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════ TOAST ══════ -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+    /* ═══════════════════════════════════════════════
+       STATE & CONFIG
+    ═══════════════════════════════════════════════ */
+    const COLORS = {
+        personal: "#7C6FE0", college: "#4ECDC4", career: "#FF6B6B",
+        exams: "#FFE66D", family: "#FF8A5C", projects: "#45B7D1",
+        preferences: "#96CEB4", technical_knowledge: "#F093FB", general: "#A0A4B8"
+    };
+
+    let graphData = { nodes: [], edges: [] };
+    let simulation, svgGroup, zoomBehavior;
+    let selectedNode = null;
+    let activeCategories = new Set();
+    let searchTerm = "";
+
+    /* ═══════════════════════════════════════════════
+       INIT
+    ═══════════════════════════════════════════════ */
+    document.addEventListener("DOMContentLoaded", async () => {
+        buildCategoryFilters();
+        buildLegend();
+        await loadData();
+        initGraph();
+    });
+
+    async function loadData() {
+        try {
+            const [graphRes, memRes] = await Promise.all([
+                fetch("/api/graph"), fetch("/api/memories")
+            ]);
+            graphData = await graphRes.json();
+            const memories = await memRes.json();
+            renderMemoryList(memories);
+            document.getElementById("stats-text").textContent = `${memories.length} memories`;
+        } catch (e) {
+            console.error("Load error:", e);
+        }
+    }
+
+    /* ═══════════════════════════════════════════════
+       CATEGORY FILTERS
+    ═══════════════════════════════════════════════ */
+    function buildCategoryFilters() {
+        const container = document.getElementById("category-filters");
+        // "All" pill
+        const allPill = document.createElement("span");
+        allPill.className = "cat-pill active";
+        allPill.textContent = "All";
+        allPill.style.color = "#e6edf3";
+        allPill.style.background = "rgba(255,255,255,0.06)";
+        allPill.onclick = () => {
+            activeCategories.clear();
+            document.querySelectorAll(".cat-pill").forEach(p => p.classList.remove("active"));
+            allPill.classList.add("active");
+            filterGraph();
+            filterList();
+        };
+        container.appendChild(allPill);
+
+        for (const [cat, color] of Object.entries(COLORS)) {
+            const pill = document.createElement("span");
+            pill.className = "cat-pill";
+            pill.textContent = cat.replace("_", " ");
+            pill.style.color = color;
+            pill.style.background = color + "18";
+            pill.dataset.category = cat;
+            pill.onclick = () => {
+                if (activeCategories.has(cat)) {
+                    activeCategories.delete(cat);
+                    pill.classList.remove("active");
+                } else {
+                    activeCategories.add(cat);
+                    pill.classList.add("active");
+                }
+                // Deactivate "All" pill
+                allPill.classList.toggle("active", activeCategories.size === 0);
+                filterGraph();
+                filterList();
+            };
+            container.appendChild(pill);
+        }
+    }
+
+    function buildLegend() {
+        const legend = document.getElementById("graph-legend");
+        legend.innerHTML = "<h3>Categories</h3>";
+        for (const [cat, color] of Object.entries(COLORS)) {
+            const item = document.createElement("div");
+            item.className = "legend-item";
+            item.innerHTML = `<span class="legend-dot" style="background:${color}"></span>${cat.replace("_", " ")}`;
+            legend.appendChild(item);
+        }
+    }
+
+    /* ═══════════════════════════════════════════════
+       MEMORY LIST
+    ═══════════════════════════════════════════════ */
+    function renderMemoryList(memories) {
+        const list = document.getElementById("memory-list");
+        if (!memories.length) {
+            list.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--text-muted);font-size:13px;">
+                No memories stored yet.<br>Click <strong>+ Add Memory</strong> to create one.</div>`;
+            return;
+        }
+        list.innerHTML = "";
+        memories.forEach(m => {
+            const card = document.createElement("div");
+            card.className = "memory-card";
+            card.dataset.id = m.id;
+            card.dataset.category = m.category;
+            card.dataset.search = `${m.title} ${m.content} ${m.tags.join(" ")}`.toLowerCase();
+            card.innerHTML = `
+                <div class="card-category" style="color:${m.color}">${m.category.replace("_", " ")}</div>
+                <div class="card-title">${escHtml(m.title)}</div>
+                <div class="card-preview">${escHtml(m.content.substring(0, 100))}</div>
+            `;
+            card.onclick = () => openDetail(m.id);
+            list.appendChild(card);
+        });
+    }
+
+    function filterList() {
+        const cards = document.querySelectorAll(".memory-card");
+        cards.forEach(card => {
+            const catMatch = activeCategories.size === 0 || activeCategories.has(card.dataset.category);
+            const searchMatch = !searchTerm || card.dataset.search.includes(searchTerm.toLowerCase());
+            card.style.display = catMatch && searchMatch ? "" : "none";
+        });
+    }
+
+    document.getElementById("search-input").addEventListener("input", e => {
+        searchTerm = e.target.value;
+        filterList();
+        filterGraph();
+    });
+
+    /* ═══════════════════════════════════════════════
+       D3 FORCE GRAPH
+    ═══════════════════════════════════════════════ */
+    function initGraph() {
+        const svg = d3.select("#graph-canvas");
+        const width = svg.node().getBoundingClientRect().width;
+        const height = svg.node().getBoundingClientRect().height;
+
+        svg.selectAll("*").remove();
+
+        // Gradient definitions for glow effects
+        const defs = svg.append("defs");
+        for (const [cat, color] of Object.entries(COLORS)) {
+            const grad = defs.append("radialGradient")
+                .attr("id", `glow-${cat}`)
+                .attr("cx", "50%").attr("cy", "50%").attr("r", "50%");
+            grad.append("stop").attr("offset", "0%").attr("stop-color", color).attr("stop-opacity", 0.4);
+            grad.append("stop").attr("offset", "100%").attr("stop-color", color).attr("stop-opacity", 0);
+        }
+
+        // Zoom handler
+        zoomBehavior = d3.zoom()
+            .scaleExtent([0.2, 5])
+            .on("zoom", (e) => svgGroup.attr("transform", e.transform));
+        svg.call(zoomBehavior);
+
+        svgGroup = svg.append("g");
+
+        // Edges
+        const linkGroup = svgGroup.append("g").attr("class", "links");
+        const links = linkGroup.selectAll("line")
+            .data(graphData.edges)
+            .join("line")
+            .attr("class", d => `link ${d.type}`)
+            .attr("stroke", d => {
+                const srcNode = graphData.nodes.find(n => n.id === d.source || n.id === d.source?.id);
+                return srcNode ? srcNode.color : "#30363d";
+            })
+            .attr("stroke-width", d => d.type === "semantic" ? 1.5 : 1);
+
+        // Nodes
+        const nodeGroup = svgGroup.append("g").attr("class", "nodes");
+        const nodes = nodeGroup.selectAll("g")
+            .data(graphData.nodes)
+            .join("g")
+            .attr("class", "node-group")
+            .call(d3.drag()
+                .on("start", dragStart)
+                .on("drag", dragging)
+                .on("end", dragEnd)
+            )
+            .on("click", (e, d) => {
+                if (!d.is_hub) openDetail(d.id);
+            });
+
+        // Glow circle
+        nodes.append("circle")
+            .attr("class", "node-glow")
+            .attr("r", d => (d.size || 14) + 10)
+            .attr("fill", d => `url(#glow-${d.category})`);
+
+        // Main circle
+        nodes.append("circle")
+            .attr("class", "node-circle")
+            .attr("r", d => d.size || 14)
+            .attr("fill", d => d.is_hub ? d.color + "40" : d.color)
+            .attr("stroke", d => d.is_hub ? d.color : d.color + "60")
+            .attr("stroke-width", d => d.is_hub ? 2 : 1.5)
+            .attr("opacity", d => d.is_hub ? 0.7 : 0.9);
+
+        // Labels
+        nodes.append("text")
+            .attr("class", d => d.is_hub ? "node-label hub-label" : "node-label")
+            .attr("dy", d => (d.size || 14) + 14)
+            .text(d => d.label.length > 25 ? d.label.substring(0, 22) + "..." : d.label);
+
+        // Simulation
+        simulation = d3.forceSimulation(graphData.nodes)
+            .force("link", d3.forceLink(graphData.edges)
+                .id(d => d.id)
+                .distance(d => d.type === "category" ? 100 : 180)
+                .strength(d => d.strength || 0.3)
+            )
+            .force("charge", d3.forceManyBody()
+                .strength(d => d.is_hub ? -250 : -120)
+            )
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("collision", d3.forceCollide().radius(d => (d.size || 14) + 8))
+            .alphaDecay(0.02)
+            .on("tick", () => {
+                links
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+                nodes.attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+
+        // Initial center zoom
+        setTimeout(() => {
+            svg.transition().duration(800).call(
+                zoomBehavior.transform,
+                d3.zoomIdentity.translate(width / 2, height / 2).scale(0.9).translate(-width / 2, -height / 2)
+            );
+        }, 500);
+    }
+
+    function filterGraph() {
+        if (!svgGroup) return;
+        const nodeGs = svgGroup.selectAll(".node-group");
+        const links = svgGroup.selectAll(".link");
+
+        nodeGs.attr("opacity", d => {
+            if (activeCategories.size > 0 && !activeCategories.has(d.category)) return 0.08;
+            if (searchTerm && d.label && !d.label.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                d.content && !d.content.toLowerCase().includes(searchTerm.toLowerCase())) return 0.08;
+            return 1;
+        });
+
+        links.attr("opacity", d => {
+            const src = typeof d.source === "object" ? d.source : graphData.nodes.find(n => n.id === d.source);
+            const tgt = typeof d.target === "object" ? d.target : graphData.nodes.find(n => n.id === d.target);
+            if (!src || !tgt) return 0.05;
+            if (activeCategories.size > 0 && !activeCategories.has(src.category) && !activeCategories.has(tgt.category)) return 0.03;
+            return 0.2;
+        });
+    }
+
+    function dragStart(e, d) { if (!e.active) simulation.alphaTarget(0.2).restart(); d.fx = d.x; d.fy = d.y; }
+    function dragging(e, d) { d.fx = e.x; d.fy = e.y; }
+    function dragEnd(e, d) { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
+
+    function zoomIn() { d3.select("#graph-canvas").transition().duration(300).call(zoomBehavior.scaleBy, 1.3); }
+    function zoomOut() { d3.select("#graph-canvas").transition().duration(300).call(zoomBehavior.scaleBy, 0.7); }
+    function resetZoom() {
+        const svg = d3.select("#graph-canvas");
+        const w = svg.node().getBoundingClientRect().width;
+        const h = svg.node().getBoundingClientRect().height;
+        svg.transition().duration(500).call(zoomBehavior.transform, d3.zoomIdentity.translate(0, 0).scale(1));
+    }
+    async function refreshGraph() {
+        await loadData();
+        initGraph();
+        toast("Graph refreshed");
+    }
+
+    /* ═══════════════════════════════════════════════
+       DETAIL PANEL
+    ═══════════════════════════════════════════════ */
+    async function openDetail(memId) {
+        try {
+            const res = await fetch(`/api/memory/${memId}`);
+            if (!res.ok) return;
+            const mem = await res.json();
+            selectedNode = memId;
+
+            // Highlight in sidebar
+            document.querySelectorAll(".memory-card").forEach(c =>
+                c.classList.toggle("selected", c.dataset.id === memId));
+
+            const panel = document.getElementById("detail-panel");
+            document.getElementById("detail-title").textContent = "Memory Details";
+
+            const body = document.getElementById("detail-body");
+            body.innerHTML = `
+                <div class="detail-field">
+                    <label>Category</label>
+                    <span class="category-badge" style="background:${mem.color}22;color:${mem.color}">${mem.category.toUpperCase().replace("_"," ")}</span>
+                </div>
+                <div class="detail-field">
+                    <label>Title</label>
+                    <input type="text" id="edit-title" value="${escAttr(mem.title)}" />
+                </div>
+                <div class="detail-field">
+                    <label>Content</label>
+                    <textarea id="edit-content">${escHtml(mem.content)}</textarea>
+                </div>
+                <div class="detail-field">
+                    <label>Tags</label>
+                    <div class="tag-list">${mem.tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join("")}</div>
+                </div>
+                <div class="detail-field">
+                    <label>Confidence</label>
+                    <div class="value">${(mem.confidence * 100).toFixed(0)}%</div>
+                    <div class="confidence-bar"><div class="confidence-fill" style="width:${mem.confidence*100}%;background:${mem.color}"></div></div>
+                </div>
+                <div class="detail-field">
+                    <label>Created</label>
+                    <div class="value" style="font-size:12px;color:var(--text-secondary)">${formatDate(mem.created_at)}</div>
+                </div>
+                <div class="detail-field">
+                    <label>Updated</label>
+                    <div class="value" style="font-size:12px;color:var(--text-secondary)">${formatDate(mem.updated_at)}</div>
+                </div>
+                <div class="detail-field">
+                    <label>ID</label>
+                    <div class="value" style="font-size:11px;color:var(--text-muted);font-family:monospace">${mem.id}</div>
+                </div>
+            `;
+
+            const actions = document.getElementById("detail-actions");
+            actions.innerHTML = `
+                <button class="btn btn-danger" onclick="deleteMemory('${mem.id}')">Delete</button>
+                <button class="btn btn-accent" onclick="saveEdit('${mem.id}')">Save Changes</button>
+            `;
+
+            panel.classList.add("open");
+        } catch (e) {
+            console.error("Detail load error:", e);
+        }
+    }
+
+    function closeDetail() {
+        document.getElementById("detail-panel").classList.remove("open");
+        document.querySelectorAll(".memory-card").forEach(c => c.classList.remove("selected"));
+        selectedNode = null;
+    }
+
+    async function saveEdit(memId) {
+        const title = document.getElementById("edit-title").value.trim();
+        const content = document.getElementById("edit-content").value.trim();
+        if (!content) { toast("Content cannot be empty"); return; }
+        try {
+            await fetch(`/api/memory/${memId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, content })
+            });
+            toast("Memory updated ✓");
+            closeDetail();
+            await refreshGraph();
+        } catch (e) {
+            toast("Error saving: " + e.message);
+        }
+    }
+
+    async function deleteMemory(memId) {
+        if (!confirm("Delete this memory permanently?")) return;
+        try {
+            await fetch(`/api/memory/${memId}`, { method: "DELETE" });
+            toast("Memory deleted");
+            closeDetail();
+            await refreshGraph();
+        } catch (e) {
+            toast("Error deleting: " + e.message);
+        }
+    }
+
+    /* ═══════════════════════════════════════════════
+       ADD MEMORY MODAL
+    ═══════════════════════════════════════════════ */
+    function openAddModal() {
+        const sel = document.getElementById("new-category");
+        sel.innerHTML = Object.keys(COLORS).map(c =>
+            `<option value="${c}" style="color:${COLORS[c]}">${c.replace("_"," ")}</option>`
+        ).join("");
+        document.getElementById("new-title").value = "";
+        document.getElementById("new-content").value = "";
+        document.getElementById("new-tags").value = "";
+        document.getElementById("add-modal").classList.add("show");
+    }
+
+    function closeAddModal() {
+        document.getElementById("add-modal").classList.remove("show");
+    }
+
+    async function submitNewMemory() {
+        const category = document.getElementById("new-category").value;
+        const title = document.getElementById("new-title").value.trim() || "User Note";
+        const content = document.getElementById("new-content").value.trim();
+        const tagsRaw = document.getElementById("new-tags").value;
+        const tags = tagsRaw ? tagsRaw.split(",").map(t => t.trim()).filter(Boolean) : [category];
+
+        if (!content) { toast("Content is required"); return; }
+
+        try {
+            const res = await fetch("/api/memory", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ category, title, content, tags })
+            });
+            const data = await res.json();
+            toast(`Memory saved (${data.status}) ✓`);
+            closeAddModal();
+            await refreshGraph();
+        } catch (e) {
+            toast("Error: " + e.message);
+        }
+    }
+
+    /* ═══════════════════════════════════════════════
+       UTILITIES
+    ═══════════════════════════════════════════════ */
+    function escHtml(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+    function escAttr(s) { return s.replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
+    function formatDate(iso) {
+        if (!iso) return "—";
+        try { return new Date(iso).toLocaleString(); } catch { return iso.substring(0, 19); }
+    }
+    function toast(msg) {
+        const c = document.getElementById("toast-container");
+        const t = document.createElement("div");
+        t.className = "toast";
+        t.textContent = msg;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
+    </script>
+</body>
+</html>
